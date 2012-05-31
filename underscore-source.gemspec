@@ -4,8 +4,8 @@ require File.expand_path('../lib/underscore-source/version', __FILE__)
 Gem::Specification.new do |gem|
   gem.authors       = ["Daniel X. Moore"]
   gem.email         = ["yahivin@gmail.com"]
-  gem.description   = %q{TODO: Write a gem description}
-  gem.summary       = %q{TODO: Write a gem summary}
+  gem.description   = %q{Let's have bundler manage our asset dependencies yo.}
+  gem.summary       = %q{A gem wrapper for underscore.js}
   gem.homepage      = ""
 
   gem.files         = `git ls-files`.split($\)
