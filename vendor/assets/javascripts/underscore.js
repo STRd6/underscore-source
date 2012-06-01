@@ -30,8 +30,11 @@
   // Export the Underscore object for CommonJS.
   if (typeof exports !== 'undefined') exports._ = _;
 
+  // Maintain a reference to the Object prototype for quick access.
+  var objPro = Object.prototype;
+
   // Current version.
-  _.VERSION = '0.4.6';
+  _.VERSION = '0.4.7';
 
   /*------------------------ Collection Functions: ---------------------------*/
 
@@ -43,11 +46,10 @@
       if (obj.forEach) {
         obj.forEach(iterator, context);
       } else if (obj.length) {
-        for (var i=0, l = obj.length; i<l; i++) iterator.call(context, obj[i], i, obj);
+        for (var i=0, l=obj.length; i<l; i++) iterator.call(context, obj[i], i, obj);
       } else {
-        for (var key in obj) if (Object.prototype.hasOwnProperty.call(obj, key)) {
-          iterator.call(context, obj[key], key, obj);
-        }
+        var keys = _.keys(obj), l = keys.length;
+        for (var i=0; i<l; i++) iterator.call(context, obj[keys[i]], keys[i], obj);
       }
     } catch(e) {
       if (e != breaker) throw e;
@@ -379,10 +381,11 @@
   _.compose = function() {
     var funcs = _.toArray(arguments);
     return function() {
+      var args = _.toArray(arguments);
       for (var i=funcs.length-1; i >= 0; i--) {
-        arguments = [funcs[i].apply(this, arguments)];
+        args = [funcs[i].apply(this, args)];
       }
-      return arguments[0];
+      return args[0];
     };
   };
 
@@ -390,7 +393,10 @@
 
   // Retrieve the names of an object's properties.
   _.keys = function(obj) {
-    return _.map(obj, function(value, key){ return key; });
+    if(_.isArray(obj)) return _.range(0, obj.length);
+    var keys = [];
+    for (var key in obj) if (objPro.hasOwnProperty.call(obj, key)) keys.push(key);
+    return keys;
   };
 
   // Retrieve the values of an object's properties.
@@ -419,12 +425,16 @@
     if (atype != btype) return false;
     // Basic equality test (watch out for coercions).
     if (a == b) return true;
+    // Check dates' integer values.
+    if (_.isDate(a) && _.isDate(b)) return a.getTime() === b.getTime();
     // One of them implements an isEqual()?
     if (a.isEqual) return a.isEqual(b);
     // Both are NaN?
-    if (_.isNumber(a) && _.isNumber(b) && isNaN(a) && isNaN(b)) return true;
+    if (_.isNaN(a) && _.isNaN(b)) return true;
     // If a is not an object by this point, we can't handle it.
     if (atype !== 'object') return false;
+    // Check for different array lengths before comparing contents.
+    if (!_.isUndefined(a.length) && a.length !== b.length) return false;
     // Nothing else worked, deep compare the contents.
     var aKeys = _.keys(a), bKeys = _.keys(b);
     // Different object sizes?
@@ -436,7 +446,7 @@
 
   // Is a given array or object empty?
   _.isEmpty = function(obj) {
-    return (_.isArray(obj) ? obj : _.values(obj)).length == 0;
+    return _.keys(obj).length == 0;
   };
 
   // Is a given value a DOM element?
@@ -446,22 +456,38 @@
 
   // Is a given value a real Array?
   _.isArray = function(obj) {
-    return Object.prototype.toString.call(obj) == '[object Array]';
+    return objPro.toString.call(obj) == '[object Array]';
   };
 
   // Is a given value a Function?
   _.isFunction = function(obj) {
-    return Object.prototype.toString.call(obj) == '[object Function]';
+    return objPro.toString.call(obj) == '[object Function]';
   };
 
   // Is a given value a String?
   _.isString = function(obj) {
-    return Object.prototype.toString.call(obj) == '[object String]';
+    return objPro.toString.call(obj) == '[object String]';
   };
 
   // Is a given value a Number?
   _.isNumber = function(obj) {
-    return Object.prototype.toString.call(obj) == '[object Number]';
+    return objPro.toString.call(obj) == '[object Number]';
+  };
+
+  // Is a given value a Date?
+  _.isDate = function(obj) {
+    return objPro.toString.call(obj) == '[object Date]';
+  };
+
+  // Is the given value NaN -- this one is interesting. NaN != NaN, and
+  // isNaN(undefined) == true, so we make sure it's a number first.
+  _.isNaN = function(obj) {
+    return _.isNumber(obj) && isNaN(obj);
+  };
+
+  // Is a given value equal to null?
+  _.isNull = function(obj) {
+    return obj === null;
   };
 
   // Is a given variable undefined?
@@ -498,9 +524,7 @@
 
   // Return a sorted list of the function names available in Underscore.
   _.functions = function() {
-    var functions = [];
-    for (var key in _) if (Object.prototype.hasOwnProperty.call(_, key)) functions.push(key);
-    return _.without(functions, 'VERSION', 'prototype', 'noConflict').sort();
+    return _.without(_.keys(_), 'VERSION', 'prototype', 'noConflict').sort();
   };
 
   // JavaScript templating a-la ERB, pilfered from John Resig's
