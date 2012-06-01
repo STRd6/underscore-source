@@ -38,7 +38,7 @@
       propertyIsEnumerable  = Object.prototype.propertyIsEnumerable;
 
   // Current version.
-  _.VERSION = '0.5.2';
+  _.VERSION = '0.5.3';
 
   // ------------------------ Collection Functions: ---------------------------
 
@@ -226,7 +226,7 @@
     if (iterable.toArray)         return iterable.toArray();
     if (_.isArray(iterable))      return iterable;
     if (_.isArguments(iterable))  return slice.call(iterable);
-    return _.map(iterable, function(val){ return val; });
+    return _.values(iterable);
   };
 
   // Return the number of elements in an object.
@@ -483,7 +483,7 @@
 
   // Is a given value an array?
   _.isArray = function(obj) {
-    return obj && obj.concat && obj.unshift;
+    return !!(obj && obj.concat && obj.unshift);
   };
 
   // Is a given variable an arguments object?
@@ -493,12 +493,12 @@
 
   // Is a given value a function?
   _.isFunction = function(obj) {
-    return obj && obj.constructor && obj.call && obj.apply;
+    return !!(obj && obj.constructor && obj.call && obj.apply);
   };
 
   // Is a given value a string?
   _.isString = function(obj) {
-    return obj === '' || (obj && obj.charCodeAt && obj.substr);
+    return !!(obj === '' || (obj && obj.charCodeAt && obj.substr));
   };
 
   // Is a given value a number?
@@ -508,12 +508,12 @@
 
   // Is a given value a date?
   _.isDate = function(obj) {
-    return obj && obj.getTimezoneOffset && obj.setUTCFullYear;
+    return !!(obj && obj.getTimezoneOffset && obj.setUTCFullYear);
   };
 
   // Is the given value a regular expression?
   _.isRegExp = function(obj) {
-    return obj && obj.test && obj.exec && (obj.ignoreCase || obj.ignoreCase === false);
+    return !!(obj && obj.test && obj.exec && (obj.ignoreCase || obj.ignoreCase === false));
   };
 
   // Is the given value NaN -- this one is interesting. NaN != NaN, and
