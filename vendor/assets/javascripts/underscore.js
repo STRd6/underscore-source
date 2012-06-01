@@ -31,7 +31,7 @@
   if (typeof exports !== 'undefined') exports._ = _;
 
   // Current version.
-  _.VERSION = '0.4.5';
+  _.VERSION = '0.4.6';
 
   /*------------------------ Collection Functions: ---------------------------*/
 
@@ -216,7 +216,8 @@
 
   // Convert anything iterable into a real, live array.
   _.toArray = function(iterable) {
-    if (!iterable) return [];
+    if (!iterable)           return [];
+    if (iterable.toArray)    return iterable.toArray();
     if (_.isArray(iterable)) return iterable;
     return _.map(iterable, function(val){ return val; });
   };
@@ -312,6 +313,22 @@
     var i = array.length;
     while (i--) if (array[i] === item) return i;
     return -1;
+  };
+
+  // Generate an integer Array containing an arithmetic progression. A port of
+  // the native Python range() function. See:
+  // http://docs.python.org/library/functions.html#range
+  _.range = function(start, stop, step) {
+    var a     = _.toArray(arguments);
+    var solo  = a.length <= 1;
+    var start = solo ? 0 : a[0], stop = solo ? a[0] : a[1], step = a[2] || 1;
+    var len   = Math.ceil((stop - start) / step);
+    if (len <= 0) return [];
+    var range = new Array(len);
+    for (var i = start, idx = 0; true; i += step) {
+      if ((step > 0 ? i - stop : stop - i) >= 0) return range;
+      range[idx++] = i;
+    }
   };
 
   /* ----------------------- Function Functions: -----------------------------*/
