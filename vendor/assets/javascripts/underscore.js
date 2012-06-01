@@ -8,7 +8,7 @@
 
 (function() {
 
-  /*------------------------- Baseline setup ---------------------------------*/
+  // ------------------------- Baseline setup ---------------------------------
 
   // Establish the root object, "window" in the browser, or "global" on the server.
   var root = this;
@@ -38,9 +38,9 @@
       propertyIsEnumerable  = Object.prototype.propertyIsEnumerable;
 
   // Current version.
-  _.VERSION = '0.5.1';
+  _.VERSION = '0.5.2';
 
-  /*------------------------ Collection Functions: ---------------------------*/
+  // ------------------------ Collection Functions: ---------------------------
 
   // The cornerstone, an each implementation.
   // Handles objects implementing forEach, arrays, and raw objects.
@@ -234,7 +234,7 @@
     return _.toArray(obj).length;
   };
 
-  /*-------------------------- Array Functions: ------------------------------*/
+  // -------------------------- Array Functions: ------------------------------
 
   // Get the first element of an array. Passing "n" will return the first N
   // values in the array. Aliased as "head". The "guard" check allows it to work
@@ -340,7 +340,7 @@
     }
   };
 
-  /* ----------------------- Function Functions: -----------------------------*/
+  // ----------------------- Function Functions: ------------------------------
 
   // Create a function bound to a given object (assigning 'this', and arguments,
   // optionally). Binding with arguments is also known as 'curry'.
@@ -396,7 +396,7 @@
     };
   };
 
-  /* ------------------------- Object Functions: ---------------------------- */
+  // ------------------------- Object Functions: ------------------------------
 
   // Retrieve the names of an object's properties.
   _.keys = function(obj) {
@@ -426,6 +426,13 @@
   _.clone = function(obj) {
     if (_.isArray(obj)) return obj.slice(0);
     return _.extend({}, obj);
+  };
+
+  // Invokes interceptor with the obj, and then returns obj.
+  // The primary purpose of this method is to "tap into" a method chain, in order to perform operations on intermediate results within the chain.
+  _.tap = function(obj, interceptor) {
+    interceptor(obj);
+    return obj;
   };
 
   // Perform a deep comparison to check if two objects are equal.
@@ -474,9 +481,39 @@
     return !!(obj && obj.nodeType == 1);
   };
 
+  // Is a given value an array?
+  _.isArray = function(obj) {
+    return obj && obj.concat && obj.unshift;
+  };
+
   // Is a given variable an arguments object?
   _.isArguments = function(obj) {
     return obj && _.isNumber(obj.length) && !_.isArray(obj) && !propertyIsEnumerable.call(obj, 'length');
+  };
+
+  // Is a given value a function?
+  _.isFunction = function(obj) {
+    return obj && obj.constructor && obj.call && obj.apply;
+  };
+
+  // Is a given value a string?
+  _.isString = function(obj) {
+    return obj === '' || (obj && obj.charCodeAt && obj.substr);
+  };
+
+  // Is a given value a number?
+  _.isNumber = function(obj) {
+    return toString.call(obj) === '[object Number]';
+  };
+
+  // Is a given value a date?
+  _.isDate = function(obj) {
+    return obj && obj.getTimezoneOffset && obj.setUTCFullYear;
+  };
+
+  // Is the given value a regular expression?
+  _.isRegExp = function(obj) {
+    return obj && obj.test && obj.exec && (obj.ignoreCase || obj.ignoreCase === false);
   };
 
   // Is the given value NaN -- this one is interesting. NaN != NaN, and
@@ -495,17 +532,7 @@
     return typeof obj == 'undefined';
   };
 
-  // Define the isArray, isDate, isFunction, isNumber, isRegExp, and isString
-  // functions based on their toString identifiers.
-  var types = ['Array', 'Date', 'Function', 'Number', 'RegExp', 'String'];
-  for (var i=0, l=types.length; i<l; i++) {
-    (function() {
-      var identifier = '[object ' + types[i] + ']';
-      _['is' + types[i]] = function(obj) { return toString.call(obj) == identifier; };
-    })();
-  }
-
-  /* -------------------------- Utility Functions: -------------------------- */
+  // -------------------------- Utility Functions: ----------------------------
 
   // Run Underscore.js in noConflict mode, returning the '_' variable to its
   // previous owner. Returns a reference to the Underscore object.
@@ -550,7 +577,7 @@
     return data ? fn(data) : fn;
   };
 
-  /*------------------------------- Aliases ----------------------------------*/
+  // ------------------------------- Aliases ----------------------------------
 
   _.forEach  = _.each;
   _.foldl    = _.inject       = _.reduce;
@@ -562,7 +589,7 @@
   _.tail     = _.rest;
   _.methods  = _.functions;
 
-  /*------------------------ Setup the OOP Wrapper: --------------------------*/
+  // ------------------------ Setup the OOP Wrapper: --------------------------
 
   // Helper function to continue chaining intermediate results.
   var result = function(obj, chain) {
