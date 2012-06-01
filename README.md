@@ -1,6 +1,6 @@
 # Underscore::Source
 
-TODO: Write a gem description
+Wrap Underscore in a gem so that we can have bundler manage JavaScript library version dependencies. The version of this gem corresponds to the version of Underscore included.
 
 ## Installation
 
@@ -18,7 +18,7 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+From your `application.js` use `//= require underscore` or `#= require underscore` if you're using CoffeeScript.
 
 ## Contributing
 

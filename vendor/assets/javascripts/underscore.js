@@ -55,7 +55,7 @@
   root._ = _;
 
   // Current version.
-  _.VERSION = '1.0.2';
+  _.VERSION = '1.0.3';
 
   // ------------------------ Collection Functions: ---------------------------
 
@@ -469,7 +469,7 @@
     // Check dates' integer values.
     if (_.isDate(a) && _.isDate(b)) return a.getTime() === b.getTime();
     // Both are NaN?
-    if (_.isNaN(a) && _.isNaN(b)) return true;
+    if (_.isNaN(a) && _.isNaN(b)) return false;
     // Compare regular expressions.
     if (_.isRegExp(a) && _.isRegExp(b))
       return a.source     === b.source &&
@@ -491,7 +491,7 @@
 
   // Is a given array or object empty?
   _.isEmpty = function(obj) {
-    if (_.isArray(obj)) return obj.length === 0;
+    if (_.isArray(obj) || _.isString(obj)) return obj.length === 0;
     for (var key in obj) if (hasOwnProperty.call(obj, key)) return false;
     return true;
   };
