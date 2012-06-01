@@ -2,7 +2,7 @@
 require "bundler/gem_tasks"
 
 def download(version)
-  source_url = "https://github.com/documentcloud/underscore/blob/#{version}/underscore.js"
+  source_url = "https://raw.github.com/documentcloud/underscore/#{version}/underscore.js"
 
   `wget -O vendor/assets/javascripts/underscore.js #{source_url}`
 end
