@@ -16,15 +16,20 @@
   // Save the previous value of the "_" variable.
   var previousUnderscore = root._;
   
-  // Create a safe reference to the Underscore object for the functions below.
-  var _ = root._ = {};
+  // If Underscore is called as a function, it returns a wrapped object that
+  // can be used OO-style. This wrapper holds altered versions of all the 
+  // underscore functions. Wrapped objects may be chained.
+  var wrapper = function(obj) { this._wrapped = obj; };
+  
+  // Create a safe reference to the Underscore object for reference below.
+  var _ = root._ = function(obj) { return new wrapper(obj); };
   
   // Export the Underscore object for CommonJS.
   if (typeof exports !== 'undefined') _ = exports;
   
   // Current version.
-  _.VERSION = '0.3.3';
-      
+  _.VERSION = '0.4.0';  
+  
   /*------------------------ Collection Functions: ---------------------------*/
     
   // The cornerstone, an each implementation.
@@ -442,9 +447,17 @@
   
   // Generate a unique integer id (unique within the entire client session).
   // Useful for temporary DOM ids.
+  var idCounter = 0;
   _.uniqueId = function(prefix) {
-    var id = this._idCounter = (this._idCounter || 0) + 1;
+    var id = idCounter++;
     return prefix ? prefix + id : id;
+  };
+  
+  // Return a sorted list of the function names available in Underscore.
+  _.functions = function() {
+    var functions = [];
+    for (var key in _) if (Object.prototype.hasOwnProperty.call(_, key)) functions.push(key);
+    return _.without(functions, 'VERSION', 'prototype', 'noConflict').sort();
   };
   
   // JavaScript templating a-la ERB, pilfered from John Resig's 
@@ -472,6 +485,29 @@
   _.foldr    = _.reduceRight;
   _.filter   = _.select;
   _.every    = _.all;
-  _.some     = _.any;  
+  _.some     = _.any;
+  _.methods  = _.functions;
+  
+  /*------------------------ Setup the OOP Wrapper: --------------------------*/
+  
+  // Add all of the Underscore functions to the wrapper object.
+  _.each(_.functions(), function(name) {
+    wrapper.prototype[name] = function() {
+      Array.prototype.unshift.call(arguments, this._wrapped);
+      var result = _[name].apply(_, arguments);
+      return this._chain ? _(result).chain() : result;
+    };
+  });
+  
+  // Start chaining a wrapped Underscore object.
+  wrapper.prototype.chain = function() {
+    this._chain = true;
+    return this;
+  };
+  
+  // Extracts the result from a wrapped and chained object.
+  wrapper.prototype.get = function() {
+    return this._wrapped;
+  };
 
 })();
