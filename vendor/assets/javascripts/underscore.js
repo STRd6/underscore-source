@@ -1,6 +1,6 @@
 //     (c) 2010 Jeremy Ashkenas, DocumentCloud Inc.
-//     Underscore is freely distributable under the terms of the MIT license.
-//     Portions of Underscore are inspired by or borrowed from Prototype.js,
+//     Underscore is freely distributable under the MIT license.
+//     Portions of Underscore are inspired or borrowed from Prototype,
 //     Oliver Steele's Functional, and John Resig's Micro-Templating.
 //     For all details and documentation:
 //     http://documentcloud.github.com/underscore
@@ -18,9 +18,6 @@
 
   // Establish the object that gets thrown to break out of a loop iteration.
   var breaker = typeof StopIteration !== 'undefined' ? StopIteration : '__break__';
-
-  // Quick regexp-escaping function, because JS doesn't have a `RegExp.escape()`.
-  var escapeRegExp = function(s) { return s.replace(/([.*+?^${}()|[\]\/\\])/g, '\\$1'); };
 
   // Save bytes in the minified (but not gzipped) version:
   var ArrayProto = Array.prototype, ObjProto = Object.prototype;
@@ -57,15 +54,15 @@
   root._ = _;
 
   // Current version.
-  _.VERSION = '1.1.1';
+  _.VERSION = '1.1.2';
 
   // Collection Functions
   // --------------------
 
-  // The cornerstone, an `each` implementation.
+  // The cornerstone, an `each` implementation, aka `forEach`.
   // Handles objects implementing `forEach`, arrays, and raw objects.
   // Delegates to **ECMAScript 5**'s native `forEach` if available.
-  var each = _.forEach = function(obj, iterator, context) {
+  var each = _.each = _.forEach = function(obj, iterator, context) {
     try {
       if (nativeForEach && obj.forEach === nativeForEach) {
         obj.forEach(iterator, context);
@@ -95,7 +92,7 @@
 
   // **Reduce** builds up a single result from a list of values, aka `inject`,
   // or `foldl`. Delegates to **ECMAScript 5**'s native `reduce` if available.
-  _.reduce = function(obj, iterator, memo, context) {
+  _.reduce = _.foldl = _.inject = function(obj, iterator, memo, context) {
     if (nativeReduce && obj.reduce === nativeReduce) {
       if (context) iterator = _.bind(iterator, context);
       return obj.reduce(iterator, memo);
@@ -106,19 +103,19 @@
     return memo;
   };
 
-  // The right-associative version of reduce, also known as `foldr`. Uses
-  // Delegates to **ECMAScript 5**'s native reduceRight if available.
-  _.reduceRight = function(obj, iterator, memo, context) {
+  // The right-associative version of reduce, also known as `foldr`.
+  // Delegates to **ECMAScript 5**'s native `reduceRight` if available.
+  _.reduceRight = _.foldr = function(obj, iterator, memo, context) {
     if (nativeReduceRight && obj.reduceRight === nativeReduceRight) {
       if (context) iterator = _.bind(iterator, context);
       return obj.reduceRight(iterator, memo);
     }
-    var reversed = _.clone(_.toArray(obj)).reverse();
+    var reversed = (_.isArray(obj) ? obj.slice() : _.toArray(obj)).reverse();
     return _.reduce(reversed, iterator, memo, context);
   };
 
-  // Return the first value which passes a truth test.
-  _.detect = function(obj, iterator, context) {
+  // Return the first value which passes a truth test. Aliased as `detect`.
+  _.find = _.detect = function(obj, iterator, context) {
     var result;
     each(obj, function(value, index, list) {
       if (iterator.call(context, value, index, list)) {
@@ -131,7 +128,8 @@
 
   // Return all the elements that pass a truth test.
   // Delegates to **ECMAScript 5**'s native `filter` if available.
-  _.filter = function(obj, iterator, context) {
+  // Aliased as `select`.
+  _.filter = _.select = function(obj, iterator, context) {
     if (nativeFilter && obj.filter === nativeFilter) return obj.filter(iterator, context);
     var results = [];
     each(obj, function(value, index, list) {
@@ -151,7 +149,8 @@
 
   // Determine whether all of the elements match a truth test.
   // Delegates to **ECMAScript 5**'s native `every` if available.
-  _.every = function(obj, iterator, context) {
+  // Aliased as `all`.
+  _.every = _.all = function(obj, iterator, context) {
     iterator = iterator || _.identity;
     if (nativeEvery && obj.every === nativeEvery) return obj.every(iterator, context);
     var result = true;
@@ -163,7 +162,8 @@
 
   // Determine if at least one element in the object matches a truth test.
   // Delegates to **ECMAScript 5**'s native `some` if available.
-  _.some = function(obj, iterator, context) {
+  // Aliased as `any`.
+  _.some = _.any = function(obj, iterator, context) {
     iterator = iterator || _.identity;
     if (nativeSome && obj.some === nativeSome) return obj.some(iterator, context);
     var result = false;
@@ -174,7 +174,8 @@
   };
 
   // Determine if a given value is included in the array or object using `===`.
-  _.include = function(obj, target) {
+  // Aliased as `contains`.
+  _.include = _.contains = function(obj, target) {
     if (nativeIndexOf && obj.indexOf === nativeIndexOf) return obj.indexOf(target) != -1;
     var found = false;
     each(obj, function(value) {
@@ -263,7 +264,7 @@
   // Get the first element of an array. Passing **n** will return the first N
   // values in the array. Aliased as `head`. The **guard** check allows it to work
   // with `_.map`.
-  _.first = function(array, n, guard) {
+  _.first = _.head = function(array, n, guard) {
     return n && !guard ? slice.call(array, 0, n) : array[0];
   };
 
@@ -271,7 +272,7 @@
   // Especially useful on the arguments object. Passing an **index** will return
   // the rest of the values in the array from that index onward. The **guard**
   // check allows it to work with `_.map`.
-  _.rest = function(array, index, guard) {
+  _.rest = _.tail = function(array, index, guard) {
     return slice.call(array, _.isUndefined(index) || guard ? 1 : index);
   };
 
@@ -302,7 +303,8 @@
 
   // Produce a duplicate-free version of the array. If the array has already
   // been sorted, you have the option of using a faster algorithm.
-  _.uniq = function(array, isSorted) {
+  // Aliased as `unique`.
+  _.uniq = _.unique = function(array, isSorted) {
     return _.reduce(array, function(memo, el, i) {
       if (0 == i || (isSorted === true ? _.last(memo) != el : !_.include(memo, el))) memo[memo.length] = el;
       return memo;
@@ -330,7 +332,7 @@
     return results;
   };
 
-  // If the browser doesn't supply us with indexOf (I'm looking at you, MSIE),
+  // If the browser doesn't supply us with indexOf (I'm looking at you, **MSIE**),
   // we need this function. Return the position of the first occurence of an
   // item in an array, or -1 if the item is not included in the array.
   // Delegates to **ECMAScript 5**'s native `indexOf` if available.
@@ -353,19 +355,22 @@
   // the native Python `range()` function. See
   // [the Python documentation](http://docs.python.org/library/functions.html#range).
   _.range = function(start, stop, step) {
-    var a     = slice.call(arguments);
-    var solo  = a.length <= 1;
-    var start = solo ? 0 : a[0], stop = solo ? a[0] : a[1], step = a[2] || 1;
-    var len   = Math.ceil((stop - start) / step);
-    if (len <= 0) return [];
-    var range = new Array(len);
-    for (var i = start, idx = 0; true; i += step) {
-      if ((step > 0 ? i - stop : stop - i) >= 0) return range;
-      range[idx++] = i;
+    var args  = slice.call(arguments),
+        solo  = args.length <= 1,
+        start = solo ? 0 : args[0],
+        stop  = solo ? args[0] : args[1],
+        step  = args[2] || 1,
+        len   = Math.max(Math.ceil((stop - start) / step), 0),
+        idx   = 0,
+        range = new Array(len);
+    while (idx < len) {
+      range[idx++] = start;
+      start += step;
     }
+    return range;
   };
 
-  // Function Functions
+  // Function (ahem) Functions
   // ------------------
 
   // Create a function bound to a given object (assigning `this`, and arguments,
@@ -450,7 +455,8 @@
   };
 
   // Return a sorted list of the function names available on the object.
-  _.functions = function(obj) {
+  // Aliased as `methods`
+  _.functions = _.methods = function(obj) {
     return _.filter(_.keys(obj), function(key){ return _.isFunction(obj[key]); }).sort();
   };
 
@@ -464,8 +470,7 @@
 
   // Create a (shallow-cloned) duplicate of an object.
   _.clone = function(obj) {
-    if (_.isArray(obj)) return obj.slice(0);
-    return _.extend({}, obj);
+    return _.isArray(obj) ? obj.slice() : _.extend({}, obj);
   };
 
   // Invokes interceptor with the obj, and then returns obj.
@@ -652,20 +657,6 @@
     return data ? func(data) : func;
   };
 
-  // Aliases:
-  // --------
-
-  _.each     = _.forEach;
-  _.foldl    = _.inject       = _.reduce;
-  _.foldr    = _.reduceRight;
-  _.select   = _.filter;
-  _.all      = _.every;
-  _.any      = _.some;
-  _.contains = _.include;
-  _.head     = _.first;
-  _.tail     = _.rest;
-  _.methods  = _.functions;
-
   // The OOP Wrapper
   // ---------------
 
@@ -673,6 +664,9 @@
   // can be used OO-style. This wrapper holds altered versions of all the
   // underscore functions. Wrapped objects may be chained.
   var wrapper = function(obj) { this._wrapped = obj; };
+
+  // Expose `wrapper.prototype` as `_.prototype`
+  _.prototype = wrapper.prototype;
 
   // Helper function to continue chaining intermediate results.
   var result = function(obj, chain) {
