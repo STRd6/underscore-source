@@ -21,14 +21,17 @@
   // underscore functions. Wrapped objects may be chained.
   var wrapper = function(obj) { this._wrapped = obj; };
 
+  // Establish the object that gets thrown to break out of a loop iteration.
+  var breaker = typeof StopIteration !== 'undefined' ? StopIteration : '__break__';
+
   // Create a safe reference to the Underscore object for reference below.
   var _ = root._ = function(obj) { return new wrapper(obj); };
 
   // Export the Underscore object for CommonJS.
-  if (typeof exports !== 'undefined') _ = exports;
+  if (typeof exports !== 'undefined') exports._ = _;
 
   // Current version.
-  _.VERSION = '0.4.2';
+  _.VERSION = '0.4.3';
 
   /*------------------------ Collection Functions: ---------------------------*/
 
@@ -47,7 +50,7 @@
         }
       }
     } catch(e) {
-      if (e != '__break__') throw e;
+      if (e != breaker) throw e;
     }
     return obj;
   };
@@ -448,7 +451,7 @@
 
   // Break out of the middle of an iteration.
   _.breakLoop = function() {
-    throw "__break__";
+    throw breaker;
   };
 
   // Generate a unique integer id (unique within the entire client session).
