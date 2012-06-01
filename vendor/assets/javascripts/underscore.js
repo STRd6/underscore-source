@@ -26,7 +26,7 @@
   commonJS ? _ = exports : window._ = _;
   
   // Current version.
-  _.VERSION = '0.3.0';
+  _.VERSION = '0.3.1';
       
   /*------------------------ Collection Functions: ---------------------------*/
     
@@ -38,16 +38,12 @@
       if (obj.forEach) {
         obj.forEach(iterator, context);
       } else if (obj.length) {
-        for (var i=0, l = obj.length; i<l; i++) iterator.call(context, obj[i], i);
+        for (var i=0, l = obj.length; i<l; i++) iterator.call(context, obj[i], i, obj);
       } else if (obj.each) {
-        obj.each(function(value) { iterator.call(context, value, index++); });
+        obj.each(function(value) { iterator.call(context, value, index++, obj); });
       } else {
-        var i = 0;
         for (var key in obj) if (Object.prototype.hasOwnProperty.call(obj, key)) {
-          var value = obj[key], pair = [key, value];
-          pair.key = key;
-          pair.value = value;
-          iterator.call(context, pair, i++);
+          iterator.call(context, obj[key], key, obj);
         }
       }
     } catch(e) {
@@ -61,8 +57,8 @@
   _.map = function(obj, iterator, context) {
     if (obj && obj.map) return obj.map(iterator, context);
     var results = [];
-    _.each(obj, function(value, index) {
-      results.push(iterator.call(context, value, index));
+    _.each(obj, function(value, index, list) {
+      results.push(iterator.call(context, value, index, list));
     });
     return results;
   };
@@ -70,8 +66,8 @@
   // Reduce builds up a single result from a list of values. Also known as
   // inject, or foldl.
   _.reduce = function(obj, memo, iterator, context) {
-    _.each(obj, function(value, index) {
-      memo = iterator.call(context, memo, value, index);
+    _.each(obj, function(value, index, list) {
+      memo = iterator.call(context, memo, value, index, list);
     });
     return memo;
   };
@@ -79,8 +75,8 @@
   // Return the first value which passes a truth test.
   _.detect = function(obj, iterator, context) {
     var result;
-    _.each(obj, function(value, index) {
-      if (iterator.call(context, value, index)) {
+    _.each(obj, function(value, index, list) {
+      if (iterator.call(context, value, index, list)) {
         result = value;
         throw '__break__';
       }
@@ -93,8 +89,8 @@
   _.select = function(obj, iterator, context) {
     if (obj.filter) return obj.filter(iterator, context);
     var results = [];
-    _.each(obj, function(value, index) {
-      iterator.call(context, value, index) && results.push(value);
+    _.each(obj, function(value, index, list) {
+      iterator.call(context, value, index, list) && results.push(value);
     });
     return results;
   };
@@ -102,8 +98,8 @@
   // Return all the elements for which a truth test fails.
   _.reject = function(obj, iterator, context) {
     var results = [];
-    _.each(obj, function(value, index) {
-      !iterator.call(context, value, index) && results.push(value);
+    _.each(obj, function(value, index, list) {
+      !iterator.call(context, value, index, list) && results.push(value);
     });
     return results;
   };
@@ -114,8 +110,8 @@
     iterator = iterator || identity;
     if (obj.every) return obj.every(iterator, context);
     var result = true;
-    _.each(obj, function(value, index) {
-      if (!(result = result && iterator.call(context, value, index))) throw '__break__';
+    _.each(obj, function(value, index, list) {
+      if (!(result = result && iterator.call(context, value, index, list))) throw '__break__';
     });
     return result;
   };
@@ -126,8 +122,8 @@
     iterator = iterator || identity;
     if (obj.some) return obj.some(iterator, context);
     var result = false;
-    _.each(obj, function(value, index) {
-      if (result = iterator.call(context, value, index)) throw '__break__';
+    _.each(obj, function(value, index, list) {
+      if (result = iterator.call(context, value, index, list)) throw '__break__';
     });
     return result;
   };
@@ -137,8 +133,8 @@
   _.include = function(obj, target) {
     if (_.isArray(obj)) return _.indexOf(obj, target) != -1;
     var found = false;
-    _.each(obj, function(pair) {
-      if (found = pair.value === target) {
+    _.each(obj, function(value) {
+      if (found = value === target) {
         throw '__break__';
       }
     });
@@ -153,19 +149,17 @@
     });
   };
   
-  // Optimized version of a common use case of map: fetching a property.
+  // Convenience version of a common use case of map: fetching a property.
   _.pluck = function(obj, key) {
-    var results = [];
-    _.each(obj, function(value){ results.push(value[key]); });
-    return results;
+    return _.map(obj, function(value){ return value[key]; });
   };
   
   // Return the maximum item or (item-based computation).
   _.max = function(obj, iterator, context) {
     if (!iterator && _.isArray(obj)) return Math.max.apply(Math, obj);
     var result = {computed : -Infinity};
-    _.each(obj, function(value, index) {
-      var computed = iterator ? iterator.call(context, value, index) : value;
+    _.each(obj, function(value, index, list) {
+      var computed = iterator ? iterator.call(context, value, index, list) : value;
       computed >= result.computed && (result = {value : value, computed : computed});
     });
     return result.value;
@@ -175,8 +169,8 @@
   _.min = function(obj, iterator, context) {
     if (!iterator && _.isArray(obj)) return Math.min.apply(Math, obj);
     var result = {computed : Infinity};
-    _.each(obj, function(value, index) {
-      var computed = iterator ? iterator.call(context, value, index) : value;
+    _.each(obj, function(value, index, list) {
+      var computed = iterator ? iterator.call(context, value, index, list) : value;
       computed < result.computed && (result = {value : value, computed : computed});
     });
     return result.value;
@@ -184,10 +178,10 @@
   
   // Sort the object's values by a criteria produced by an iterator.
   _.sortBy = function(obj, iterator, context) {
-    return _.pluck(_.map(obj, function(value, index) {
+    return _.pluck(_.map(obj, function(value, index, list) {
       return {
         value : value,
-        criteria : iterator.call(context, value, index)
+        criteria : iterator.call(context, value, index, list)
       };
     }).sort(function(left, right) {
       var a = left.criteria, b = right.criteria;
@@ -361,12 +355,12 @@
   
   // Retrieve the names of an object's properties.
   _.keys = function(obj) {
-    return _.pluck(obj, 'key');
+    return _.map(obj, function(value, key){ return key; });
   };
   
   // Retrieve the values of an object's properties.
   _.values = function(obj) {
-    return _.pluck(obj, 'value');
+    return _.map(obj, identity);
   };
   
   // Extend a given object with all of the properties in a source object.
