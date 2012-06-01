@@ -1,10 +1,10 @@
 // Underscore.js
-// (c) 2009 Jeremy Ashkenas, DocumentCloud Inc.
+// (c) 2010 Jeremy Ashkenas, DocumentCloud Inc.
 // Underscore is freely distributable under the terms of the MIT license.
 // Portions of Underscore are inspired by or borrowed from Prototype.js,
 // Oliver Steele's Functional, and John Resig's Micro-Templating.
 // For all details and documentation:
-// http://documentcloud.github.com/underscore/
+// http://documentcloud.github.com/underscore
 
 (function() {
 
@@ -38,7 +38,7 @@
       propertyIsEnumerable  = Object.prototype.propertyIsEnumerable;
 
   // Current version.
-  _.VERSION = '0.5.5';
+  _.VERSION = '0.5.7';
 
   // ------------------------ Collection Functions: ---------------------------
 
@@ -488,7 +488,7 @@
 
   // Is a given variable an arguments object?
   _.isArguments = function(obj) {
-    return obj && _.isNumber(obj.length) && !_.isArray(obj) && !propertyIsEnumerable.call(obj, 'length');
+    return obj && _.isNumber(obj.length) && !obj.concat && !obj.substr && !obj.apply && !propertyIsEnumerable.call(obj, 'length');
   };
 
   // Is a given value a function?
@@ -503,7 +503,7 @@
 
   // Is a given value a number?
   _.isNumber = function(obj) {
-    return toString.call(obj) === '[object Number]';
+    return (obj === +obj) || (toString.call(obj) === '[object Number]');
   };
 
   // Is a given value a date?
@@ -559,20 +559,29 @@
     return prefix ? prefix + id : id;
   };
 
+  // By default, Underscore uses ERB-style template delimiters, change the
+  // following template settings to use alternative delimiters.
+  _.templateSettings = {
+    start       : '<%',
+    end         : '%>',
+    interpolate : /<%=(.+?)%>/g
+  };
+
   // JavaScript templating a-la ERB, pilfered from John Resig's
   // "Secrets of the JavaScript Ninja", page 83.
   // Single-quote fix from Rick Strahl's version.
   _.template = function(str, data) {
+    var c  = _.templateSettings;
     var fn = new Function('obj',
       'var p=[],print=function(){p.push.apply(p,arguments);};' +
       'with(obj){p.push(\'' +
       str.replace(/[\r\t\n]/g, " ")
-         .replace(/'(?=[^%]*%>)/g,"\t")
+         .replace(new RegExp("'(?=[^"+c.end[0]+"]*"+c.end+")","g"),"\t")
          .split("'").join("\\'")
          .split("\t").join("'")
-         .replace(/<%=(.+?)%>/g, "',$1,'")
-         .split("<%").join("');")
-         .split("%>").join("p.push('")
+         .replace(c.interpolate, "',$1,'")
+         .split(c.start).join("');")
+         .split(c.end).join("p.push('")
          + "');}return p.join('');");
     return data ? fn(data) : fn;
   };
